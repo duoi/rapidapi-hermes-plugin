@@ -1,0 +1,10 @@
+name: rapidapi
+description: Execute generic requests against any RapidAPI endpoint
+version: 1.0.0
+author: Catalina
+entry_point: rapidapi_plugin
+toolsets:
+  - rapidapi
+dependencies: []
+env_vars:
+  - RAPIDAPI_KEY
