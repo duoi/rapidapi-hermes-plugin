@@ -88,3 +88,51 @@ registry.register(
     check_fn=check_rapidapi_requirements,
     requires_env=["RAPIDAPI_KEY"],
 )
+
+from .search import RapidAPISearch
+
+def search_rapidapi(term: str, limit: int = 5, task_id: str = None) -> Dict[str, Any]:
+    """Search the RapidAPI marketplace for APIs by keyword."""
+    # We grab the tokens from environment if the user supplied them, otherwise we try anonymously
+    cookies = os.getenv("RAPIDAPI_COOKIES", "")
+    csrf = os.getenv("RAPIDAPI_CSRF", "")
+    
+    searcher = RapidAPISearch(cookies=cookies, csrf_token=csrf)
+    try:
+        results = searcher.search(term, limit)
+        return {
+            "success": True,
+            "data": results
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+registry.register(
+    name="search_rapidapi",
+    toolset="rapidapi",
+    schema={
+        "name": "search_rapidapi",
+        "description": "Search the RapidAPI marketplace for APIs by keyword to find new endpoints to use.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "term": {
+                    "type": "string",
+                    "description": "The search term (e.g. 'weather', 'ebay', 'flight')"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return (default 5)"
+                }
+            },
+            "required": ["term"]
+        }
+    },
+    handler=lambda args, **kw: json.dumps(search_rapidapi(
+        term=args.get("term"),
+        limit=args.get("limit", 5),
+        task_id=kw.get("task_id")
+    )),
+    # No check_fn needed because search can often run anonymously, 
+    # or the user can inject RAPIDAPI_COOKIES into .env
+)
